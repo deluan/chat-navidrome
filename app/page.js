@@ -19,7 +19,7 @@ export default function Home() {
     }
 
     const getSystemMessage = async (userInputMessage) => {
-        const response = await fetch('https://chat-twitter-backend.fly.dev/system_message', {
+        const response = await fetch('http://localhost:8000/system_message', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ export default function Home() {
 
     const handleChat = async (updatedMessages) => {
         let accumulatedText = "";
-        fetch('https://chat-twitter-backend.fly.dev/chat_stream', {
+        fetch('http://localhost:8000/chat_stream', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ export default function Home() {
         });
     };
 
-  
+
 return (
     <>
         <Head>
@@ -114,13 +114,13 @@ return (
             <link rel="icon" href="/favicon.ico" />
             <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
         </Head>
-  
+
         <div className="h-screen flex flex-col bg-gray-800 text-gray-100 font-sans font-roboto">
             <Header />
             <div className="flex-1 overflow-auto p-4 flex justify-center">
                 <ChatMessages messages={messages} />
             </div>
-  
+
             <div className="border-t border-gray-700">
                 <InputBar
                     input={input}

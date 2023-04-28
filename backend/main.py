@@ -45,7 +45,7 @@ app.add_middleware(
 
 pinecone.init(
     api_key=os.environ['PINECONE_API_KEY'],
-    environment='us-east1-gcp'
+    environment=os.environ['PINECONE_ENVIRONMENT'],
 )
 
 class Message(BaseModel):
@@ -54,7 +54,7 @@ class Message(BaseModel):
 
 class ContextSystemMessage(BaseModel):
     system_message: str
-    
+
 class Chat(BaseModel):
     messages: list[dict]
 
@@ -99,10 +99,10 @@ def embedding_search(query, k):
         openai_organization=os.environ['OPENAI_ORG_ID'],
     )
     db = Pinecone(
-        index=pinecone.Index('pinecone-index'),
+        index=pinecone.Index(os.environ['PINECONE_INDEX_NAME']),
         embedding_function=embeddings.embed_query,
         text_key='text',
-        namespace='twitter-algorithm'
+        namespace='navidrome-codebase'
     )
 
     return db.similarity_search(query, k=k)
@@ -117,10 +117,10 @@ def system_message(query: Message):
     context = format_context(docs)
 
     prompt = """Given the following context and code, answer the following question. Do not use outside context, and do not assume the user can see the provided context. Try to be as detailed as possible and reference the components that you are looking at. Keep in mind that these are only code snippets, and more snippets may be added during the conversation.
-    Do not generate code, only reference the exact code snippets that you have been provided with. If you are going to write code, make sure to specify the language of the code. For example, if you were writing Python, you would write the following:
+    Do not generate code, only reference the exact code snippets that you have been provided with. If you are going to write code, make sure to specify the language of the code. For example, if you were writing GoLang, you would write the following:
 
-    ```python
-    <python code goes here>
+    ```golang
+    <GoLang code goes here>
     ```
     
     Now, here is the relevant context: 
@@ -164,7 +164,7 @@ async def chat_stream(chat: List[Message]):
                         break
 
                     new_messages.append(message.text)
-                    
+
                 query_messages = [system_message] + new_messages + [latest_query]
                 query_text = '\n'.join(query_messages)
 
@@ -181,7 +181,7 @@ async def chat_stream(chat: List[Message]):
             messages = [latest_query]
 
             # for all the rest of the messages, iterate over them in reverse and fit as many in as possible
-            token_limit = 4000
+            token_limit = 3500
             num_tokens = len(encoding.encode(chat[0].text)) + len(encoding.encode(formatted_query))
             for message in reversed(chat[1:-1]):
                 # count the number of new tokens

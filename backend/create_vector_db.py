@@ -23,7 +23,7 @@ def embed_document(vector_db, splitter, document_id, document):
     docsearch = vector_db.add_texts(texts, metadatas=metadatas)
 
 def zipfile_from_github():
-    http_response = urlopen('https://github.com/twitter/the-algorithm/archive/refs/heads/main.zip')
+    http_response = urlopen('https://github.com/navidrome/navidrome/archive/refs/heads/master.zip')
     zf = BytesIO(http_response.read())
     return zipfile.ZipFile(zf, 'r')
 
@@ -35,13 +35,13 @@ encoder = tiktoken.get_encoding('cl100k_base')
 
 pinecone.init(
     api_key=os.environ['PINECONE_API_KEY'],
-    environment='us-east1-gcp'
+    environment=os.environ['PINECONE_ENVIRONMENT'],
 )
 vector_store = Pinecone(
-    index=pinecone.Index('pinecone-index'),
+    index=pinecone.Index(os.environ['PINECONE_INDEX_NAME']
     embedding_function=embeddings.embed_query,
     text_key='text',
-    namespace='twitter-algorithm'
+    namespace='navidrome-codebase'
 )
 
 splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
@@ -50,11 +50,11 @@ total_tokens, corpus_summary = 0, []
 file_texts, metadatas = [], []
 with zipfile_from_github() as zip_ref:
     zip_file_list = zip_ref.namelist()
-    
+
     pbar = tqdm(zip_file_list, desc=f'Total tokens: 0')
     for file_name in pbar:
-        if (file_name.endswith('/') or 
-            any(f in file_name for f in ['.DS_Store', '.gitignore']) or 
+        if (file_name.endswith('/') or
+            any(f in file_name for f in ['.DS_Store', '.gitignore', '.snapshots']) or
             any(file_name.endswith(ext) for ext in ['.png', '.jpg', '.jpeg'])
         ):
             continue
@@ -62,7 +62,7 @@ with zipfile_from_github() as zip_ref:
             with zip_ref.open(file_name, 'r') as file:
                 file_contents = str(file.read())
                 file_name_trunc = str(file_name).replace('the-algorithm-main/', '')
-                
+
                 n_tokens = len(encoder.encode(file_contents))
                 total_tokens += n_tokens
                 corpus_summary.append({'file_name': file_name_trunc, 'n_tokens': n_tokens})
@@ -73,10 +73,10 @@ with zipfile_from_github() as zip_ref:
 
 split_documents = splitter.create_documents(file_texts, metadatas=metadatas)
 vector_store.from_documents(
-    documents=split_documents, 
+    documents=split_documents,
     embedding=embeddings,
-    index_name='pinecone-index',
-    namespace='twitter-algorithm'
+    index_name=os.environ['PINECONE_INDEX_NAME'],
+    namespace='navidrome-codebase'
 )
 
 pd.DataFrame.from_records(corpus_summary).to_csv('data/corpus_summary.csv', index=False)

@@ -17,7 +17,7 @@ const InputBar = ({ input, setInput, handleKeyDown, handleSubmit }) => {
           <textarea
             ref={inputRef}
             rows="1"
-            placeholder="Do likes impact the ranking of my tweets?"
+            placeholder="How can I add a new Subsonic API endpoint?"
             className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300 resize-none overflow-hidden bg-gray-600 text-gray-100"
             value={input}
             onChange={(e) => setInput(e.target.value)}
